@@ -1,5 +1,5 @@
 $(function(){
-    
+
     var csrfToken = getCookie('csrftoken'),
         widget = $('.files-widget'),
         effectTime = 200,
@@ -75,15 +75,15 @@ $(function(){
     function numberformat( number, decimals, dec_point, thousands_sep ) {
         // http://kevin.vanzonneveld.net
         // +   original by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-        // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)  
+        // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
         // *     example 1: number_format(1234.5678, 2, '.', '');
-        // *     returns 1: 1234.57     
-     
+        // *     returns 1: 1234.57
+
         var n = number, c = isNaN(decimals = Math.abs(decimals)) ? 2 : decimals;
         var d = dec_point == undefined ? "," : dec_point;
         var t = thousands_sep == undefined ? "." : thousands_sep, s = n < 0 ? "-" : "";
         var i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
-        
+
         return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
     }
 
@@ -96,10 +96,10 @@ $(function(){
         // from http://snipplr.com/view/5945/javascript-numberformat--ported-from-php/
         if (filesize >= 1073741824) {
              filesize = numberformat(filesize / 1073741824, 2, '.', '') + 'G' + b;
-        } else { 
+        } else {
             if (filesize >= 1048576) {
                 filesize = numberformat(filesize / 1048576, 2, '.', '') + 'M' + b;
-        } else { 
+        } else {
                 if (filesize >= 1024) {
                 filesize = numberformat(filesize / 1024, 0) + 'k' + b;
             } else {
@@ -135,7 +135,7 @@ $(function(){
         if (movedOutFile) {
             var movedInputValue = splitlines(movedInput.val()),
                 filename = movedOutFile.data('image-path');
-            
+
             movedInputValue.push(filename);
             movedInput.val(movedInputValue.join('\n'));
         }
@@ -176,12 +176,12 @@ $(function(){
             image.attr('src', e.target.result);
             image.css({ 'width': '', 'height': '' });
         };
-        
+
         image.css({
             'max-width': previewSize, 'max-height': previewSize,
             'width': defaultSize, 'height': defaultSize
         });
-        
+
         if (file.size < 500000) {
             reader.readAsDataURL(file);
         } else {
@@ -212,7 +212,7 @@ $(function(){
 
     function completePreview(preview, imagePath, thumbnailPath, fromHiddenInput) {
         var dropbox = preview.closest('.files-widget-dropbox');
-        
+
         preview.removeClass('new').attr('data-image-path', imagePath);
         preview.find('.progress-holder, .filename').remove();
 
@@ -285,7 +285,7 @@ $(function(){
             deletedContainer = $('.files-widget-deleted', widget),
             deletedList = $('.deleted-list', deletedContainer),
             preview = addPreview(dropbox, imagePath, thumbnailPath);
-        
+
         deletedPreview.slideUp(effectTime, function() {
             $(this).remove();
             if (!deletedList.find('.deleted-file').length) {
@@ -305,9 +305,8 @@ $(function(){
         $('.files-widget-dropbox').removeClass('dragging-files');
     });
 
-    widget.each(function() {
-        var that = $(this),
-            dropbox = $('.files-widget-dropbox', that),
+    function initial_widget(that) {
+        var dropbox = $('.files-widget-dropbox', that),
             filesInput = $('.files-input', that),
             message = $('.message', dropbox),
             uploadURL = dropbox.data('upload-url'),
@@ -373,7 +372,7 @@ $(function(){
         }
 
         $('.media-library-button', that).on('click', function() {
-            var url = window.__filebrowser_url || '/admin/media-library/browse/'
+            var url = window.__filebrowser_url || '/admin/media-library/browse/';
             FileBrowser.show(fileBrowserResultInput.attr('id'), url + '?pop=1');
             checkFileBrowserResult();
         });
@@ -405,7 +404,7 @@ $(function(){
                 return false;
             }
         });
-        
+
         dropbox.disableSelection();
         dropbox.bind('dragover', function (e) {
             dropbox.addClass('dragover');
@@ -485,7 +484,20 @@ $(function(){
                 stats.text(sizeformat(data.loaded) +
                     ' of ' + sizeformat(data.total) +
                     ' (' + sizeformat(data.bitrate, true) + 'ps)');
-            },
+            }
         });
+    }
+
+    widget.each(function() {initial_widget($(this));});
+
+    django.jQuery(document).on('formset:added', function(event, $row, formsetName) {
+        var $files_widget = $($row).find('.files-widget');
+        if ($files_widget.length){
+            var row_id = $row.attr('id'), $prefix_name = $files_widget.find('[data-input-name]');
+            if (row_id.indexOf('-')){
+                $prefix_name.attr('data-input-name', $prefix_name.attr('data-input-name').replace('__prefix__', row_id.split('-')[1]));
+            }
+            initial_widget($files_widget);
+        }
     });
 });
